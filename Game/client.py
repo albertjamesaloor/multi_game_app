@@ -3,7 +3,8 @@ from network import Network
 from button import mainButton, Button
 import constants
 import user_management
-from game import RPS, Shooter
+from game import Shooter
+from user_management import load_user_stats, save_user_stats, update_user_rps_stats, update_user_shooter_stats, login
 
 pygame.font.init()
 pygame.mixer.init()
@@ -18,7 +19,7 @@ def get_font(size): # Returns Press-Start-2P in the desired size
 def draw_rps_win(win, game, p, score_a, score_b):
     win.blit(constants.BACKGROUND, (0, 0))
     
-    if not(RPS.connected()):
+    if not(game.connected()):
         font = pygame.font.SysFont("comicsans", 60)
         text = font.render("Waiting for Player...", 1, constants.white)
         win.blit(text, (constants.width/2 - text.get_width()/2, constants.height/2 - text.get_height()/2))
@@ -36,22 +37,22 @@ def draw_rps_win(win, game, p, score_a, score_b):
         win.blit(Player0_score, (constants.width - Player0_score.get_width() - 10, 10))
         win.blit(Player1_score, (10, 10))
 
-        move1 = RPS.get_player_move(0)
-        move2 = RPS.get_player_move(1)
-        if RPS.bothWent():
+        move1 = game.get_player_move(0)
+        move2 = game.get_player_move(1)
+        if game.bothWent():
             text1 = font.render(move1, 1, constants.white)
             text2 = font.render(move2, 1, constants.white)
         else:
-            if RPS.p1Went and p == 0:
+            if game.p1Went and p == 0:
                 text1 = font.render(move1, 1, constants.white)
-            elif RPS.p1Went:
+            elif game.p1Went:
                 text1 = font.render("Locked In", 1, constants.Mint_Green)
             else:
                 text1 = font.render("Waiting...", 1, constants.Mint_Green)
 
-            if RPS.p2Went and p == 1:
+            if game.p2Went and p == 1:
                 text2 = font.render(move2, 1, constants.white)
-            elif RPS.p2Went:
+            elif game.p2Went:
                 text2 = font.render("Locked In", 1, constants.Mint_Green)
             else:
                 text2 = font.render("Waiting...", 1, constants.Mint_Green)
@@ -90,37 +91,37 @@ def rps():
             print("Couldn't get game")
             break
         
-        if RPS.bothWent():
+        if game.bothWent():
             draw_rps_win(win, game, player, score_a, score_b)
             
             if player == 0:
-                if RPS.get_player_move(0) == "Rock":
+                if game.get_player_move(0) == "Rock":
                     win.blit(constants.PLAYER_ROCK_IMAGE, (0, constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(0) == "Paper":
+                elif game.get_player_move(0) == "Paper":
                     win.blit(constants.PLAYER_PAPER_IMAGE, (0, constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(0) == "Scissors":
+                elif game.get_player_move(0) == "Scissors":
                     win.blit(constants.PLAYER_SCISSORS_IMAGE, (0, constants.height/2 - constants.height*0.2))
 
-                if RPS.get_player_move(1) == "Rock":
+                if game.get_player_move(1) == "Rock":
                     win.blit(constants.OPPONENT_ROCK_IMAGE, (constants.width*0.6 , constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(1) == "Paper":
+                elif game.get_player_move(1) == "Paper":
                     win.blit(constants.OPPONENT_PAPER_IMAGE, (constants.width*0.6 , constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(1) == "Scissors":
+                elif game.get_player_move(1) == "Scissors":
                     win.blit(constants.OPPONENT_SCISSORS_IMAGE, (constants.width*0.6 , constants.height/2 - constants.height*0.2))
 
             if player == 1:
-                if RPS.get_player_move(1) == "Rock":
+                if game.get_player_move(1) == "Rock":
                     win.blit(constants.PLAYER_ROCK_IMAGE, (0, constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(1) == "Paper":
+                elif game.get_player_move(1) == "Paper":
                     win.blit(constants.PLAYER_PAPER_IMAGE, (0, constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(1) == "Scissors":
+                elif game.get_player_move(1) == "Scissors":
                     win.blit(constants.PLAYER_SCISSORS_IMAGE, (0, constants.height/2 - constants.height*0.2))
 
-                if RPS.get_player_move(0) == "Rock":
+                if game.get_player_move(0) == "Rock":
                     win.blit(constants.OPPONENT_ROCK_IMAGE, (constants.width*0.6, constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(0) == "Paper":
+                elif game.get_player_move(0) == "Paper":
                     win.blit(constants.OPPONENT_PAPER_IMAGE, (constants.width*0.6 , constants.height/2 - constants.height*0.2))
-                elif RPS.get_player_move(0) == "Scissors":
+                elif game.get_player_move(0) == "Scissors":
                     win.blit(constants.OPPONENT_SCISSORS_IMAGE, (constants.width*0.6, constants.height/2 - constants.height*0.2))
 
             pygame.time.delay(500)
@@ -141,16 +142,31 @@ def rps():
                 score_a += 1
 
             if score_a == 3 or score_b == 3:
-                score_a = score_b = 0
-                font = pygame.font.SysFont("Times New Roman", 300)
-                if score_b > score_a:
-                    text = font.render("You Won!", 1, constants.Electric_Blue)
-                elif score_a < score_b:
-                    text = font.render("You Lost...", 1, constants.Electric_Blue)
+                font = pygame.font.SysFont("Times New Roman", 150)
+                result = ""
 
-                win.blit(text, (constants.width/2 - text.get_width()/2, constants.height/2 - text.get_height()/2))
+                # Show message before resetting the scores
+                if score_b > score_a:
+                    text = font.render("You Won!", 1, constants.Electric_Green)
+                    result = "win"  # Use = instead of +=
+                elif score_a > score_b:
+                    text = font.render("You Lost...", 1, constants.Dark_Red)
+                    result = "lose"  # Use = instead of +=
+
+                # Display the result
+                win.blit(constants.RECTANGLE, (0, 0))
+                win.blit(text, (constants.width / 2 - text.get_width() / 2, constants.height / 2 - text.get_height() / 2))
+                pygame.display.update()  # Update the display to show the result
+
+                # Update and save user stats
+                update_user_rps_stats(stats, result)
+                save_user_stats(username, stats)
+
+                # Reset scores after the message is shown and stats are updated
+                score_a = score_b = 0
+
             pygame.display.update()
-            pygame.time.delay(3000)
+            pygame.time.delay(1000)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -195,6 +211,46 @@ def draw_shooter_win(red, yellow, red_bullets, yellow_bullets, red_health, yello
 
     pygame.display.update()
 
+def draw_stats_win():
+
+    stats = load_user_stats(username)
+
+    win.blit(constants.BACKGROUND, (0, 0))
+    header_font = pygame.font.SysFont("comicsans", 60)
+    stats_font = pygame.font.SysFont("comicsans", 40)
+    text = header_font.render("RPS", 1, constants.white)
+    win.blit(text, (constants.width/4 - text.get_width()/2, 100))
+    text = header_font.render("Shooter", 1, constants.white)
+    win.blit(text, (constants.width*0.75 - text.get_width()/2, 100))
+
+    rps_total_games = stats_font.render(f"Total Games: {stats['rps_total_games']}", 1, constants.white)
+    win.blit(rps_total_games, (constants.width/4 - text.get_width()/2, 200))
+
+    rps_wins = stats_font.render(f"Wins: {stats['rps_wins']}", 1, constants.white)
+    win.blit(rps_wins, (constants.width/4 - text.get_width()/2, 300))
+
+    rps_losses = stats_font.render(f"Losses: {stats['rps_losses']}", 1, constants.white)
+    win.blit(rps_losses, (constants.width/4 - text.get_width()/2, 400))
+
+    rps_win_rate = stats_font.render(f"Win Rate: {stats['rps_win_rate']}", 1, constants.white)
+    win.blit(rps_win_rate, (constants.width/4 - text.get_width()/2, 500))
+
+    rps_loss_rate = stats_font.render(f"Loss Rate: {stats['rps_loss_rate']}", 1, constants.white)
+    win.blit(rps_loss_rate, (constants.width/4 - text.get_width()/2, 600))
+
+    shooter_total_games = stats_font.render(f"Total Games: {stats['shooter_total_games']}", 1, constants.white)
+    win.blit(shooter_total_games, (constants.width*0.75 - text.get_width()/2, 300))
+
+    shooter_red_wins = stats_font.render(f"Red Wins: {stats['shooter_red_wins']}", 1, constants.white)
+    win.blit(shooter_red_wins, (constants.width*0.75 - text.get_width()/2, 400))
+
+    shooter_yellow_wins = stats_font.render(f"Yellow Wins: {stats['shooter_yellow_wins']}", 1, constants.white)
+    win.blit(shooter_yellow_wins, (constants.width*0.75 - text.get_width()/2, 500))
+
+    pygame.display.update()
+
+
+
 def draw_winner(text):
     draw_text = constants.WINNER_FONT.render(text, 1, constants.white)
     win.blit(draw_text, (constants.width / 2 - draw_text.get_width() // 2, constants.height / 2 - draw_text.get_height() // 2))
@@ -220,7 +276,6 @@ def shooter():
     run = True
     while run:
         clock.tick(constants.FPS)
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -236,6 +291,7 @@ def shooter():
                     bullet = pygame.Rect(red.x, red.y + red.height // 2 - 2, 10, 5)
                     red_bullets.append(bullet)
                     constants.BULLET_FIRE_SOUND.play()
+
                 if event.key == pygame.K_ESCAPE:
                     red_health = yellow_health = 10
                     constants.SPACE_BGM.stop()
@@ -258,6 +314,8 @@ def shooter():
         if winner_text != "":
             constants.WIN_SOUND.play()
             draw_winner(winner_text)
+            update_user_shooter_stats(stats, winner_text)
+            save_user_stats(username, stats)
             break
 
         keys_pressed = pygame.key.get_pressed()
@@ -270,11 +328,27 @@ def shooter():
 
     shooter()
 
+def stats_win():
+    clock = pygame.time.Clock()
+
+    run = True
+    while run:
+        clock.tick(constants.FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    main_menu(username)
+        
+        draw_stats_win()
+    stats_win()
 def main_menu(username):
-    stats = user_management.load_user_stats(username)
     run = True
     clock = pygame.time.Clock()
-    while True:
+    while run:
         clock.tick(60)
         win.blit(constants.BACKGROUND,(0, 0))
 
@@ -284,15 +358,18 @@ def main_menu(username):
         MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
 
         RPS_BUTTON = mainButton(image=pygame.image.load("Assets/Play Rect.png"), pos=(640, 250), 
-                            text_input="RPS", font=get_font(75), base_color=constants.Blue, hovering_color=constants.white)
-        SHOOTER_BUTTON = mainButton(image=pygame.image.load("Assets/Options Rect.png"), pos=(640, 400), 
-                            text_input="SHOOTER", font=get_font(75), base_color=constants.Blue, hovering_color=constants.white)
-        QUIT_BUTTON = mainButton(image=pygame.image.load("Assets/Quit Rect.png"), pos=(640, 550), 
-                            text_input="QUIT", font=get_font(75), base_color=constants.Blue, hovering_color=constants.white)
+                            text_input="RPS", font=get_font(65), base_color=constants.Blue, hovering_color=constants.white)
+        SHOOTER_BUTTON = mainButton(image=pygame.image.load("Assets/Options Rect.png"), pos=(640, 390), 
+                            text_input="SHOOTER", font=get_font(65), base_color=constants.Blue, hovering_color=constants.white)
+        STATS_BUTTON = mainButton(image=pygame.image.load("Assets/Options Rect.png"), pos=(640, 530), 
+                            text_input="STATS", font=get_font(65), base_color=constants.Blue, hovering_color=constants.white)
+        QUIT_BUTTON = mainButton(image=pygame.image.load("Assets/Quit Rect.png"), pos=(640, 670), 
+                            text_input="QUIT", font=get_font(65), base_color=constants.Blue, hovering_color=constants.white)
+        
 
         win.blit(MENU_TEXT, MENU_RECT)
 
-        for button in [RPS_BUTTON, SHOOTER_BUTTON, QUIT_BUTTON]:
+        for button in [RPS_BUTTON, SHOOTER_BUTTON, STATS_BUTTON, QUIT_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
             button.update(win)
         
@@ -305,6 +382,8 @@ def main_menu(username):
                     rps()
                 if SHOOTER_BUTTON.checkForInput(MENU_MOUSE_POS):
                     shooter()
+                if STATS_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    stats_win()
                 if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                     pygame.quit()
                     run = False 
@@ -312,6 +391,6 @@ def main_menu(username):
         pygame.display.update()
 
 while True:
-    username = user_management.login(win)
-    main_menu(username)
-    
+    username, stats = login(win)
+    load_user_stats(username)
+    main_menu(username)   
