@@ -2,15 +2,18 @@ import os
 import pickle
 import hashlib
 import pygame
-from constants import USER_DATA_DIR, MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH, white, black
+from constants import USER_DATA_DIR, MAX_USERNAME_LENGTH, MAX_PASSWORD_LENGTH, white, black, width, height
 
 # Default user statistics structure
 default_stats = {
-    "total_games": 0,
-    "wins": 0,
-    "losses": 0,
-    "win_rate": 0.0,
-    "loss_rate": 0.0,
+    "rps_total_games": 0,
+    "rps_wins": 0,
+    "rps_losses": 0,
+    "rps_win_rate": 0.0,
+    "rps_loss_rate": 0.0,
+    "shooter_total_games": 0,
+    "shooter_red_wins": 0,
+    "shooter_yellow_wins": 0,
     "password": ""
 }
 
@@ -37,24 +40,28 @@ def save_user_stats(username, stats):
         pickle.dump(stats, f)
 
 # Function to update user stats based on game result
-def update_user_stats(stats, result):
-    stats["total_games"] += 1
+def update_user_rps_stats(stats, result):
+    stats["rps_total_games"] += 1
     if result == "win":
-        stats["wins"] += 1
+        stats["rps_wins"] += 1
     elif result == "lose":
-        stats["losses"] += 1
-    else:
-        stats["ties"] += 1
-    stats["win_rate"] = stats["wins"] / stats["total_games"]
-    stats["loss_rate"] = stats["losses"] / stats["total_games"]
+        stats["rps_losses"] += 1
+    stats["rps_win_rate"] = stats["rps_wins"] / stats["rps_total_games"]
+    stats["rps_loss_rate"] = stats["rps_losses"] / stats["rps_total_games"]
 
+def update_user_shooter_stats(stats, result):
+    stats["shooter_total_games"] += 1
+    if result == "Yellow Wins!":
+        stats["shooter_yellow_wins"] += 1
+    elif result == "Red Wins!":
+        stats["shooter_red_wins"] += 1
 # Function for user login
 def login(win):
     username = ""
     password = ""
-    input_rect = pygame.Rect(200, 200, 300, 50)
+    input_rect = pygame.Rect(width/2- 150, height/2 - 25, 300, 50)
     font = pygame.font.Font(None, 32)
-    active = False
+    active = True
     is_username = True  # Toggle between username and password input
     login_successful = False
     user_data = None
@@ -63,8 +70,10 @@ def login(win):
         win.fill(black)
         text_surface = font.render(f"Username: {username}", True, white)
         password_surface = font.render(f"Password: {'*' * len(password)}", True, white)
-        win.blit(text_surface, (input_rect.x, input_rect.y))
-        win.blit(password_surface, (input_rect.x, input_rect.y + 60))
+        notice_surface = font.render("Use arrow keys to toggle between username and password.", True, white)
+        win.blit(text_surface, (input_rect.x + 3, input_rect.y + 13))
+        win.blit(password_surface, (input_rect.x + 3, input_rect.y + 60))
+        win.blit(notice_surface, (width/2 - notice_surface.get_width()/2, 600))
 
         pygame.draw.rect(win, white, input_rect, 2)
 
@@ -73,11 +82,6 @@ def login(win):
                 pygame.quit()
                 exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if input_rect.collidepoint(event.pos):
-                    active = True
-                else:
-                    active = False
 
             if event.type == pygame.KEYDOWN:
                 if active:
@@ -86,7 +90,9 @@ def login(win):
                             username = username[:-1]
                         elif not is_username and len(password) > 0:
                             password = password[:-1]
-                    elif event.key == pygame.K_TAB:
+                    elif event.key == pygame.K_UP:
+                        is_username = not is_username
+                    elif event.key == pygame.K_DOWN:
                         is_username = not is_username
                     elif event.key == pygame.K_RETURN:
                         if is_username:
@@ -102,11 +108,13 @@ def login(win):
                                 login_successful = True
                         else:
                             is_username = not is_username  # Switch back to username input after enter
+
                     else:
                         if is_username and len(username) < MAX_USERNAME_LENGTH:
                             username += event.unicode
                         elif not is_username and len(password) < MAX_PASSWORD_LENGTH:
                             password += event.unicode
+
 
         pygame.display.update()
 
