@@ -12,10 +12,12 @@ white = (255, 255, 255)
 Mint_Green = (172, 255, 172)
 Pale_Lavender = (199, 184, 234)
 black = (0, 0, 0)
-Blue = (3, 169, 100)
+Blue = (3, 169, 139)
 Electric_Blue = (3, 169, 244)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+Electric_Green = (57, 255, 0)
+Dark_Red = (139, 0, 0)
 
 ROCK_IMAGE = pygame.image.load(os.path.join('Assets', 'Rock.png'))
 PLAYER_ROCK_IMAGE = pygame.transform.scale(ROCK_IMAGE, (width*0.4, height*0.4))
@@ -32,6 +34,7 @@ PLAYER_SCISSORS_IMAGE = pygame.transform.flip(pygame.transform.scale(SCISSOR_IMA
 
 BACKGROUND = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'Background.png')), (width, height))
 BACKGROUND_TITLE = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'TitleBG.png')), (width/6, height*0.37))
+RECTANGLE = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'Play Rect.png')), (width, height))
 
 
 # Create a partition in the middle
