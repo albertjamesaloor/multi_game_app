@@ -8,6 +8,8 @@ pygame.mixer.set_num_channels(16)
 width = 1280
 height = 720
 
+win = pygame.display.set_mode((width, height))
+
 white = (255, 255, 255)
 Mint_Green = (172, 255, 172)
 Pale_Lavender = (199, 184, 234)
@@ -41,6 +43,7 @@ RECTANGLE = pygame.transform.scale(pygame.image.load(os.path.join('Assets', 'Pla
 BORDER = pygame.Rect(width // 2 - 5, 0, 10, height)
 
 # Load sounds
+MENU_BUTTON = pygame.mixer.Sound(os.path.join('Assets', 'menu_button.mp3'))
 BULLET_HIT_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'collision.mp3'))
 BULLET_FIRE_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'smoke_bomb.mp3'))
 WIN_SOUND = pygame.mixer.Sound(os.path.join('Assets', 'win!.mp3'))

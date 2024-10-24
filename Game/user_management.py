@@ -71,9 +71,12 @@ def login(win):
         text_surface = font.render(f"Username: {username}", True, white)
         password_surface = font.render(f"Password: {'*' * len(password)}", True, white)
         notice_surface = font.render("Use arrow keys to toggle between username and password.", True, white)
+        warning_surface = font.render("Please make sure the server is running, before playing mulitplayer games.", True, white)
         win.blit(text_surface, (input_rect.x + 3, input_rect.y + 13))
         win.blit(password_surface, (input_rect.x + 3, input_rect.y + 60))
         win.blit(notice_surface, (width/2 - notice_surface.get_width()/2, 600))
+        win.blit(warning_surface, (width/2 - warning_surface.get_width()/2, 120))
+
 
         pygame.draw.rect(win, white, input_rect, 2)
 
@@ -81,7 +84,6 @@ def login(win):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
-
 
             if event.type == pygame.KEYDOWN:
                 if active:

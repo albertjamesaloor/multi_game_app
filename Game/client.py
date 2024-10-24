@@ -1,6 +1,6 @@
 import pygame
 from network import Network
-from button import mainButton, Button
+from button import * 
 import constants
 from draw_utils import *
 from game import Shooter
@@ -213,10 +213,11 @@ def shooter():
 
 def stats_win():
     clock = pygame.time.Clock()
-
+    
     run = True
     while run:
         clock.tick(constants.FPS)
+        stats = load_user_stats(username)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -226,7 +227,7 @@ def stats_win():
                 if event.key == pygame.K_ESCAPE:
                     main_menu(username)
         
-        draw_stats_win()
+        draw_stats_win(win, stats)
     stats_win()
 def main_menu(username):
     run = True
